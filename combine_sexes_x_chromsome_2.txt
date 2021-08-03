@@ -1,0 +1,114 @@
+#!/bin/bash
+
+#Big note:
+#The plink --fam d.fam --dosage c.txt list sepheader Zin --write-dosage  command doesnt seem to work to combine male and female files
+#Doing this will make each SNP appear to be a different SNP for the male and female files (in other words, N SNPs doubles, and will be ALL NA for 
+#either men or women
+#Instead do the traditional command saying that the subjects are split but not hte SNPs, but make a temporary file where the SNPs are subset to onyl the 
+#intersecting set!
+
+#Instead 
+WORKING_DIR=~/dac/pts/wave3/v1/
+
+cd $WORKING_DIR 
+
+
+for abbr in ehvp psy5 # $(ls | grep -v reference_info)
+do
+ cd "$WORKING_DIR"/"$abbr"/qc1 
+ echo Working on $abbr in "$WORKING_DIR"/"$abbr"/qc1 
+ 
+ #First need to determine if files are called -qc or -qc1.
+
+ qc1count=$(ls | grep X | grep .fam | head -n1 | grep -c qc1.)
+ 
+ if [ $qc1count -eq 1 ]
+ then
+  echo "qc1 detected, assume data is suffix .qc1"
+  qcvar=qc1
+ else
+  echo "qc1 not detected, assume data is suffix .qc"
+  qcvar=qc
+ fi
+  
+ 
+#The sort was designed so that I would find all position data, whethere it be male or female only
+ for pos in $(ls | grep X | grep .fam | awk 'BEGIN{FS="ch.fl.chr"}{print $2}'  | sed 's/.out.dosage.fam//g' | sort -u )
+ do
+  echo "$pos"
+
+ #Check for men and women existing to see if we need to make a special intersected map file. Then subset the dosage files to the intersection  and merge. If it's just men or just women, only need to copy the existing map file.
+  if [ $(ls |  ls | grep dos_pts_"$abbr"_mix_am-"$qcvar".chrX. | grep .hg19.ch.fl.chr"$pos".out.dosage.gz | grep -v fini | wc -l ) == 2 ] 
+  then
+    echo "$abbr Males and females detected"
+    
+    #Intersect the map files to make a snplist
+     awk '{print $2}' dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.map | LC_ALL=C sort -k1b,1  > dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.mal.temp
+     awk '{print $2}' dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.map | LC_ALL=C sort -k1b,1  > dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.fem.temp
+     LC_ALL=C join dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.mal.temp dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.fem.temp > dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.all.temp
+     
+    #Intersect this snplist with one of the map files to make the combined map file
+     LC_ALL=C join -1 1 -2 2 dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.all.temp <(LC_ALL=C sort -k2b,2 dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.map ) | awk '{print $2,$1,$3,$4}' > dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map
+    
+    #Get overlapping SNP data in males
+    ~/plink --dosage  dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.gz Zout \
+            --fam     dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.fam \
+            --map     dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.map  \
+            --extract dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.all.temp \
+            --write-dosage --out dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.overlap
+    #check output dosage file for missing subjects..        
+            
+    #Get overlapping set in females      
+     ~/plink --dosage  dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.gz Zout \
+            --fam      dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.fam \
+            --map      dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.map  \
+            --extract  dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.all.temp \
+            --write-dosage --out dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.overlap
+  
+  #Make dosage list files  
+  #If a dose list exists, delete it so we don't do a double file
+    rm "$pos".doselist          
+    echo 1 dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.overlap.out.dosage.gz dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.fam > "$pos".doselist
+    echo 1 dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.overlap.out.dosage.gz dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.fam >> "$pos".doselist
+    
+   #Combine male and female files
+    ~/plink --dosage "$pos".doselist list sepheader Zout --fam dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr2_000_021.out.dosage.fam \
+            --map  dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map --write-dosage \
+            --out dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos"
+                  
+   #Copy the abitrarily selected .fam file also to serve as a combined fam file (note that some subjects, the sexless ones, will not be found, but this should
+   #be fine as long as the header is maintained in the dosage file.
+    cp dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr2_000_021.out.dosage.fam dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.fam
+    
+   #Remove temp files
+    rm dos_pts_"$abbr"_mix_am-"$qcvar".chrX.*.hg19.ch.fl.chr"$pos".out.overlap.out.dosage.gz
+    rm  dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.*.temp
+
+    rm "$pos".doselist  
+   # rm dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.log\
+      # rm dos_pts_"$abbr"_mix_am-"$qcvar".chrX.*.hg19.ch.fl.chr"$pos".out.overlap
+          #rm dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map.all.temp
+    rm dos_pts_"$abbr"_mix_am-"$qcvar".chrX.*.hg19.ch.fl.chr"$pos".out.overlap.log
+
+    
+  #And now the else if handling if only one sex is imputed (i.e. just copy the files directly).
+  elif [ -f dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.gz ] &&  [ ! -f dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.gz ]
+    then
+     echo "$abbr  Only males detected!"
+     #Make correctly named by file just copying everything and renaming..
+     cp dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.map dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map
+     cp dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.gz  dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.gz
+     cp dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.fam dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.fam    
+  elif [ ! -f dos_pts_"$abbr"_mix_am-"$qcvar".chrX.mal.hg19.ch.fl.chr"$pos".out.dosage.gz ] && [ -f dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.gz ]
+  then
+     echo "$abbr  Only females detected!"
+     
+     cp dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.map dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.map
+     cp dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.gz  dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.gz
+     cp dos_pts_"$abbr"_mix_am-"$qcvar".chrX.fem.hg19.ch.fl.chr"$pos".out.dosage.fam dos_pts_"$abbr"_mix_am-"$qcvar".hg19.ch.fl.chr"$pos".out.dosage.fam
+  fi
+  
+ done
+done
+
+#sbatch --time=02:15:00 --error merge_sex_x.e --output merge_sex_x.o  combine_sexes_x_chromsome_2.txt -D ~/dac/pts/wave3/v1/
