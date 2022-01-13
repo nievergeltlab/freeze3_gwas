@@ -1,0 +1,21 @@
+for files in $(ls /home/maihofer/freeze3_gwas/results_cat | grep -v gz_ | grep aam)
+{
+ #echo $files >> completed_aam_may10_2021.txt
+ zcat /home/maihofer/freeze3_gwas/results_cat/$files | head -n2  |  tail -n1 | paste <(echo $files) -  >> completed_aam_jan5_2021.txt
+}
+
+
+for files in $(ls /home/maihofer/freeze3_gwas/results_cat | grep -v gz_ | grep eur)
+{
+ #echo $files >> completed_eur_may10_2021.txt
+ zcat /home/maihofer/freeze3_gwas/results_cat/$files | head -n2  |  tail -n1 | paste <(echo $files) -   >> completed_eur_may10_2021.txt
+}
+
+
+
+for files in $(ls /home/maihofer/freeze3_gwas/results_cat | grep -v gz_ | grep lat)
+{
+ #echo $files >> completed_lat_may10_2021.txt
+ zcat /home/maihofer/freeze3_gwas/results_cat/$files | head -n2  |  tail -n1 | paste <(echo $files) -   >> completed_lat_may10_2021.txt
+}
+

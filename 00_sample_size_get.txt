@@ -1,0 +1,41 @@
+#For each included study, calculate the case/control sample size for grotzinger
+
+echo "FID_IID PHENO1" > famheader.txt 
+
+for study in $(ls pheno | grep pheno | sed 's/p2_//g' | sed 's/.pheno//g' | sed 's/_eur//g' | sed 's/_aam//g' | sed 's/_lat//g' | uniq)
+do
+ study1=$(echo $study | sed 's/_/ /g' | awk '{print $1}')
+ study2=$(echo $study | sed 's/_/ /g' | awk '{print $2}')
+ 
+ #sometimes the famfile doesnt exist due to having qc or qc1 in the name
+ famfile=dos_pts_"$study1"_mix_am-qc1.hg19.ch.fl.chr12_037_061.out.dosage.fam
+ if [ ! -e /home/pgcdacpt/dac/pts/wave3/v1/"$study1"/qc1/$famfile ]
+ then 
+  famfile=dos_pts_"$study1"_mix_am-qc.hg19.ch.fl.chr12_037_061.out.dosage.fam
+ fi
+ 
+ #Double level join on the pheno/cov then on the fam file
+ LC_ALL=C join <(LC_ALL=C join <(awk '{print $1"_"$2,$3}' pheno/p2_"$study"_aam.pheno | LC_ALL=C sort -k1b,1 ) <(awk '{print $1"_"$2}' pheno/p2_"$study1"_aam_"$study2"_pcs.cov | LC_ALL=C sort -k1b,1 ) ) <(awk '{print $1"_"$2,$6}' /home/pgcdacpt/dac/pts/wave3/v1/"$study1"/qc1/"$famfile" | cat famheader.txt - |  LC_ALL=C sort -k1b,1) > samplecounts/"$study".samplecount
+ 
+ #print the name of column 2, and the number of samples. if column 2 says case, print number of cases and number of controls.
+ #study n samples column 2 n cases column 2 n controls column 2
+ phenofilevar=$(head -n1 samplecounts/"$study".samplecount | awk '{print $2}')
+ if [ $phenofilevar == "Case" ]
+ then
+  ncases=$(awk '{print $2}' samplecounts/"$study".samplecount | grep  2 | wc -l)
+  ncontrols=$(awk '{print $2}' samplecounts/"$study".samplecount | grep  1  | wc -l)
+  nsamples=$(awk '{print $2}' samplecounts/"$study".samplecount | grep -E "1|2"  | wc -l)
+  usedcasevar="Case"
+ else 
+  ncases=$(awk '{print $3}' samplecounts/"$study".samplecount | tail -n+2  | grep 2  | wc -l )
+  ncontrols=$(awk '{print $3}' samplecounts/"$study".samplecount  | tail -n+2 | grep 1  | wc -l)
+  nsamples=$(awk '{print $3}' samplecounts/"$study".samplecount | tail -n+2 | grep  -E "1|2"  | wc -l )
+  usedcasevar="PHENO1"
+  fi
+ #jan 5, 2020 error: it was counting N +1 due to PHENO1. Added tail -n+2 to PHENO1
+ 
+ echo $study $study1 $study2 $phenofilevar $usedcasevar $nsamples $ncases $ncontrols > samplecounts/"$study".samplecount.counted
+ 
+ done
+
+cat samplecounts/*.samplecount.counted > samplecounts/aam_case_control.counted

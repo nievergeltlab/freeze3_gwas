@@ -1,0 +1,219 @@
+
+###PGC-PTSD analyst datasets
+ 
+
+ SCHEME SAMPLESIZE
+ GENOMICCONTROL OFF
+ AVERAGEFREQ ON
+ MINMAXFREQ ON
+ TRACKPOSITIONS ON #Turn off for analyze het
+ 
+ CHROMOSOME CHROM
+ POSITION POS
+ MARKERLABEL   ID
+ ALLELELABELS  A1 AX
+ PVALUELABEL   P 
+ EFFECTLABEL   BETA
+ STDERR SE
+ WEIGHTLABEL OBS_CT
+ FREQLABEL A1_FREQ
+ ADDFILTER A1_FREQ >= 0.01
+ 
+ #tbd: count neff or n cases + n controls or both, somehow?
+#Notes: I have only checked where noted. For F2 data, pretty confident in the phenotype where otherwise not noted
+
+ ##Analysis group 1: Continuous PTSD measure studies
+  #1 MRSC
+   PROCESS results_cat/mrsc_mrsc_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX
+  #3 SAFR
+   PROCESS results_cat/safr_safr_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX
+  #4 DNHS
+   PROCESS results_cat/dnhs_dnhs_aam_pcs.Lifetime_PTSD_Continuous.assoc.gz_XXX
+  #7 FSCD
+   PROCESS results_cat/fscd_fscd_aam_pcs.Lifetime_PTSD_Continuous.assoc.gz_XXX
+  #9 COGB
+   PROCESS results_cat/cogb_cogb_aam_pcs.Lifetime_PTSD_Continuous.assoc.gz_XXX
+  #14 NSS1 - manually coded phenotype
+   PROCESS results_cat/nss1_nss1_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX
+  #15 NSS2 - manually coded phenotype
+   PROCESS results_cat/nss2_nss2_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX
+  #16 PPDS - manually coded phenotype
+   PROCESS results_cat/nss1_ppds_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX   
+  #47 GTPC
+   PROCESS results_cat/gtpc_gtpc_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX
+  #50 COM1
+   PROCESS results_cat/comc_comc_aam_pcs.Lifetime_PTSD_Continuous.assoc.gz_XXX    
+  #54 GRAC
+   PROCESS results_cat/grac_grac_aam_pcs.Lifetime_PTSD_Continuous.assoc.gz_XXX
+  #73 AURO - 51% correlation between phenotype file and continuous phenotype..good enough
+   PROCESS results_cat/auro_auro_aam_pcs.Current_PTSD_Continuous.assoc.gz_XXX 
+
+   
+ ##Analysis group 2: Case control studies with genotype access
+  EFFECTLABEL  log(OR)
+  STDERR LOG(OR)_SE
+  WEIGHTLABEL ZZZ #Weights not needed, using IVW estimator
+ 
+ #6 GSDC
+  DEFAULTWEIGHT 1204
+  PROCESS results_cat/gsdc_gsdc_aam_pcs.Case.assoc.gz_XXX
+
+ #17 and 18 19 20 21 and 61 KSUD BOBA KMCT PORT GUTS KMC2 
+  DEFAULTWEIGHT 137
+  PROCESS results_cat/pts1_pts1_aam_pcs.Case.assoc.gz_XXX
+  
+ #35 STRO
+  DEFAULTWEIGHT 330
+  PROCESS results_cat/stro_stro_aam_pcs.Case.assoc.gz_XXX
+   
+ #37 and 38 and 39 Running all of psy3 for this
+  DEFAULTWEIGHT 167
+  PROCESS results_cat/psy3_psy3_aam_pcs.Case.assoc.gz_XXX
+
+ #43-45 WACH EGHS ADNH - case pheno is just PHENO1
+   DEFAULTWEIGHT 740
+   PROCESS results_cat/meg2_meg2_aam_pcs.Case.assoc.gz_XXX
+   
+ #56 and 57 58 59 YEHU BAKE VRIS WANG
+  DEFAULTWEIGHT 153
+  PROCESS results_cat/wrby_wrby_aam_pcs.Case.assoc.gz_XXX
+  
+ #64 and 68 and 70 and 71  BRLS DGTP DSAS STAR DELB
+  DEFAULTWEIGHT 271
+  PROCESS results_cat/psy5_psy5_aam_pcs.Case.assoc.gz_XXX
+  
+  
+ #97 SAF2
+  DEFAULTWEIGHT 96
+  PROCESS results_cat/saf2_saf2_aam_pcs.Case.assoc.gz_XXX
+  
+
+###Group 3: Other analyst summary datasets 
+
+ ##Freeze 2
+  MARKERLABEL  SNP
+  ADDFILTER INFO > 0.6
+  PVALUELABEL   P 
+  ALLELELABELS A1 A2
+  CHROMOSOME CHR
+  POSITION BP
+  EFFECTLABEL  log(OR)
+  STDERR SE
+    
+  #26 MIRE
+   FREQLABEL FRQ_U_544
+   DEFAULTWEIGHT 1110
+   PROCESS sumstats/bychr/MIRE_aam_analysis1_mf.gz_XXX
+   
+  #31 NCPT
+   FREQLABEL FRQ_U_32
+   DEFAULTWEIGHT 72
+   PROCESS sumstats/bychr/N800_aam_analysis1_mf.gz_XXX
+
+  REMOVE FILTERS
+  
+ ##New F3 summary data following non-standard formats:
+#has to be switched to QT
+  #94 RCOG #There are sx in 1281 subjects, but PTSD in 3510.
+  #A1 bim and a2 bim are not clear
+  #by Email from liz, 522 cases . Which should mean 3510 - 522 = 2988 controls
+ 
+ #Measure scale is unrecognizable - i can't use this
+ #uses GWAF software I think https://cran.r-project.org/web/packages/GWAF/index.html
+   MARKERLABEL   SNP
+   ALLELELABELS  A1 A2
+   PVALUELABEL   P
+   EFFECT  Delta
+   STDERR SE
+   FREQLABEL Freq
+    ADDFILTER Freq >= 0.01
+    ADDFILTER  Freq <= 0.99
+   CHROMOSOME CHR
+   POSITION BP
+   
+    WEIGHTLABEL FAKE
+   DEFAULTWEIGHT 623
+  
+   #zcat PTSDdx.trauma_PTSDdx_oct2017AA.fuma.tbl.gz.fuma.gz | awk '{if(NR==1) SE="SE"; if(NR>1 && $8!="NA" && $8 != 0.000) SE=$7/$8;  if(NR==1 || $8 != "NA" ) print $0,SE}' | gzip > PTSDdx.trauma_PTSDdx_oct2017AA.fuma.tbl.gz.fuma.se.gz
+   # #SE has to be extracted using Beta, which is really Z..
+   # R 
+   # library(data.table)
+   # stats <- fread('sumstats/PTSDdx.trauma_PTSDdx_oct2017AA.fuma.tbl.gz',data.table=F)
+   # stats$SE <- abs(stats$Delta/stats$Beta)
+   # write.table(stats,file='sumstats/PTSDdx.trauma_PTSDdx_oct2017AA.fuma.tbl.gz.fuma.se',quote=F,row.names=F)
+   # gzip and run reformat script
+    PROCESS sumstats/bychr/PTSDdx.trauma_PTSDdx_oct2017AA.fuma.tbl.gz.fuma.se.gz_XXX
+   
+    REMOVE FILTERS
+   
+  #96 WTCM: No, waste of time - results not valid
+
+   # MARKERLABEL   SNP
+   # ALLELELABELS  A1 A2
+   # PVALUELABEL   P
+   # EFFECT   log(OR)
+   # FREQLABEL FRQ_U_36548
+    # ADDFILTER FRQ_U_36548 >= 0.01
+    # ADDFILTER  FRQ_U_36548 <= 0.99
+   # CHROMOSOME CHR
+   # POSITION BP
+   # STDERR SE
+   # WEIGHTLABEL NMISS
+ 
+   # REMOVE FILTERS
+   
+### EHR
+
+
+ #For SSW uncomment this:
+ 
+
+#95 BIOM. 318 cases 9264 contorls. Data re-annotated: Had to merge in some allele and frequency information from doner data (DAI2)
+  MARKERLABEL   SNP
+  ALLELELABELS  A1 A2
+  PVALUELABEL   P
+  EFFECT   log(OR)
+  FREQLABEL  FRQ_U_36548 #Doner frequencies for now..
+   ADDFILTER FRQ_U_36548 >= 0.01 
+   ADDFILTER FRQ_U_36548 <= 0.99
+  CHROMOSOME CHR
+  POSITION BP
+  
+  #IVW details 
+   #STDERR SE
+  
+  #find out what number this is
+ ADDFILTER NMISS > 5911 #80% of total N
+ 
+ #SSW details 
+ DEFAULTWEIGHT 2435.00
+ WEIGHTLABEL XNMISS
+
+  # zcat sumstats/PTSD_broad_AA_clean.head.assoc.logistic.merged.gwas2.gz | awk '{if(NR==1) SE="SE"; if(NR>1 && $8!="NA") SE=log($7)/$8;  if(NR==1 || $8 != "NA") print $0,SE}' | gzip > sumstats/PTSD_broad_AA_clean.head.assoc.logistic.merged.gwas2.se.gz
+   
+   PROCESS sumstats/bychr/PTSD_broad_AA_clean.head.assoc.logistic.merged.gwas2.se.gz_XXX
+   
+ REMOVEFILTERS
+   
+ 
+###Group 5: Million veteran program
+  MARKERLABEL   SNP_ID
+  ALLELELABELS  EA NEA
+  CHROMOSOME Chromosome
+  POSITION Position
+  EFFECT BETA
+  STDERR SE
+  PVALUELABEL   P
+    FREQLABEL EAF
+   ADDFILTER EAF >= 0.01 
+   ADDFILTER EAF <= 0.99
+  WEIGHTLABEL x #weight is wrong in this
+  DEFAULTWEIGHT 25318 
+  #Reformat to detect effect allele,  change log(OR) to just logOR
+
+  #zcat sumstats/dbGAP_totalPCL_afr.gz | awk '{ if ($6==$4) NEA=$5 ; if ($6 == $5) NEA= $4; if (NR==1) NEA="NEA"; print $0,NEA}'  > sumstats/dbGAP_totalPCL_afr.harmonized.gz
+  PROCESS sumstats/bychr/dbGAP_totalPCL_afr.harmonized.gz_XXX
+
+OUTFILE metal_results/aam_ptsd_pcs_v5_jan4_2021_XXX .tbl
+ANALYZE 
+QUIT

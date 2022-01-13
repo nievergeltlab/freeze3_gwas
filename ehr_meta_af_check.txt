@@ -1,0 +1,42 @@
+zgrep -w -m1  rs4879926  74_dai2/daner_iPSYCH2015_PTSDbroad_chr1to22_HRC_MAF01.gz 
+grep -w -m1  rs4879926  79_biov/ptsd_gwas_dosage_chr.all.PHENO2.glm.firth.additive.with.header.and.freqs.good 
+grep -w -m1  rs4879926  81_mgbb/pbk_eur_ptsd_gwas_broad_share.txt 
+zgrep -w -m1  rs4879926  85_hunt/HUNT_ptsd_pgc_allchr_filter_info_results.txt.gz.fuma.gz 
+zgrep -w -m1  rs4879926  89_swed/SWE_STAGE_PTSD_saige_info_sumstats.gz 
+zgrep -w -m1  rs4879926  90_fing/file_download_22122020_chia_yen_PTSD_broad_bothsex_hg19.gz.fuma.gz 
+zgrep -w -m1  rs4879926  91_ukb2//PTSD_EHR_Broad_2020_12_10_ReGENIE_Step2_WG.txt.regenie.gz 
+grep -w -m1  rs4879926  95_biom/PTSD_broad_EA_clean.head.assoc.logistic.merged.gwas2 
+zgrep -w -m1  rs4879926   98_esbb/PTSD_broad_EstBB_GWAS_results.txt.noinfo.gz 
+grep -w -m1  rs4879926  99_mayo/PLINK/ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic2 
+
+zcat 74_dai2/daner_iPSYCH2015_PTSDbroad_chr1to22_HRC_MAF01.gz | head -n1
+cat 79_biov/ptsd_gwas_dosage_chr.all.PHENO2.glm.firth.additive.with.header.and.freqs.good | head -n1
+cat 81_mgbb/pbk_eur_ptsd_gwas_broad_share.txt | head -n1
+zcat 85_hunt/HUNT_ptsd_pgc_allchr_filter_info_results.txt.gz.fuma.gz | head -n1
+zcat 89_swed/SWE_STAGE_PTSD_saige_info_sumstats.gz | head -n1
+zcat 90_fing/file_download_22122020_chia_yen_PTSD_broad_bothsex_hg19.gz.fuma.gz | head -n1
+zcat 91_ukb2//PTSD_EHR_Broad_2020_12_10_ReGENIE_Step2_WG.txt.regenie.gz | head -n1
+cat 95_biom/PTSD_broad_EA_clean.head.assoc.logistic.merged.gwas2 | head -n1
+zcat  98_esbb/PTSD_broad_EstBB_GWAS_results.txt.noinfo.gz | head -n1
+cat 99_mayo/PLINK/ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic2 | head -n1
+
+
+library(data.table)
+d1 <- fread('cat metal_results/eur_ehr_PTSD_Broad_ssw_may5_20211.tbl',data.table=F)
+pdf('frequency_sd_may5.pdf',7,7)
+hist(d1$FreqSE)
+dev.off()
+
+#This is better than SE, it allows detection of single outliers
+pdf('frequency_dif_may5.pdf',7,7)
+hist(d1$MaxFreq - d1$MinFreq)
+dev.off()
+
+d1$Freqdif <- d1$MaxFreq - d1$MinFreq
+d2 <- subset(d1,Weight >= 0.8*259693.00)
+
+head(d1[order(d1$Freqdif,decreasing=T),])
+
+head(d2[order(d2$Freqdif,decreasing=T),])
+
+table(d2$Freqdif > 0.1 )
