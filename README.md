@@ -23,7 +23,7 @@ Reformat files for MiXeR analysis
 01_mixer_univariate.sh  
 Univariate MiXeR
 
-02_mixer_univariate_plots.sh 
+02_mixer_univariate_plots.sh  
 Summarize univariate MiXeR runs and produce output plots/tables
 
 03_mixer_bivariate.sh  
