@@ -43,11 +43,11 @@ VETSA twins cohort GWAS in Bolt LMM
 01_f3_gwas_v1.sh  
 Run individual GWAS (where I have data), meta-analyze results, preliminary LDSC analysis of results
 
-  run_trauma_gwas_v2_freeze3.slurm,run_trauma_gwas_v2_freeze3_case_control.slurm  
-  Job scripts for running GWAS
+    run_trauma_gwas_v2_freeze3.slurm,run_trauma_gwas_v2_freeze3_case_control.slurm  
+    Job scripts for running GWAS
   
-  run_meta_v2_loo_v2.slurm  
-  Job script for meta-analysis
+    run_meta_v2_loo_v2.slurm  
+    Job script for meta-analysis
   
 00_translate_meta_pluses_to_samplesize.sh  
 Translate the +/- outputs from metal into exact sample sizes, to tabulate actual N/N cases/N controls for every marker.
