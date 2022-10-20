@@ -18,7 +18,7 @@ datadir=/home/pgcdacpt/dac/pts/wave3/v1/"$study"/qc1/
 mkdir "$TMPDIR"/"$study"_"$study_2"
 
 #for files in $( ls $datadir | grep .gz$ | sed 's/.gz//g' | grep  chr10_000_020) TEST CASE
-for files in $( ls $datadir | grep .gz$ | sed 's/.gz//g' | grep -v "chrX.mal" | grep -v "chrX.fem")
+for files in $( ls $datadir | grep .gz$ | sed 's/.gz//g' )
 do
  outname=$(echo $files | awk 'BEGIN{FS="ch.fl.chr"}{print $2}'  | sed 's/.out.dosage//g') #get output filename...
  echo $outname
@@ -41,7 +41,7 @@ fi
 
     echo "Assuming $plink_flag"
     
-   /home/maihofer/trauma_gwas/plink2 --import-dosage "$datadir"/"$files".gz --fam "$datadir"/"$files".fam --map "$datadir"/"$files".map --pheno pheno/p2_"$study"_"$study_2"_"$ancgroup".pheno   \
+   /home/maihofer/freeze3_gwas/plink2 --import-dosage "$datadir"/"$files".gz --fam "$datadir"/"$files".fam --map "$datadir"/"$files".map --pheno pheno/p2_"$study"_"$study_2"_"$ancgroup".pheno   \
     --covar pheno/p2_"$study"_"$ancgroup"_"$study_2"_"$cov".cov --maf 0.01 \
     --glm cols=chrom,pos,ref,alt,ax,a1freq,machr2,a1freqcc,firth,test,nobs,orbeta,se,ci,tz,p   hide-covar firth-fallback  \
     --covar-variance-standardize --threads 11 --ci 0.95 $plink_flag \

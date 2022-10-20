@@ -6,7 +6,7 @@ cd /home/maihofer/freeze3_gwas
 counter=1
 for files in $(cat $metafile)
 do
-/home/maihofer/trauma_gwas/METAL-master/build/bin/metal $files > errandout/"$files"_errorlogs 2>&1 &
+/home/maihofer/freeze3_gwas/metal $files > errandout/"$files"_errorlogs 2>&1 &
 counter=$((counter+1))
 if [ $counter  -eq 8 ]
 then

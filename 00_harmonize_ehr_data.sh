@@ -148,6 +148,56 @@
     awk '{if (NR == 1) print $0, "A2", "A1_Freq"; else if ($6==$5) print $0,$4,$13; else if ($6==$4) print $0,$5,1-$13}' 79_biov/ptsd_gwas_dosage_chr.all.PHENO2.glm.firth.additive.with.header.and.freqs > 79_biov/ptsd_gwas_dosage_chr.all.PHENO2.glm.firth.additive.with.header.and.freqs.good
   
     awk '{if (NR == 1) print $0, "A2", "A1_Freq"; else if ($6==$5) print $0,$4,$13; else if ($6==$4) print $0,$5,1-$13}' 79_biov/ptsd_gwas_dosage_chr.all.PHENO2.glm.firth.additive.with.header.and.freqs > 79_biov/ptsd_gwas_dosage_chr.all.PHENO2.glm.firth.additive.with.header.and.freqs.good
+    
+  #Chr X: 
+  
+    #Need to annotate the rs-ids.
+  
+    #the columns are: CHROM POS REF ALT ID
+    #important to use ref and alt1 for this!
+    cat /mnt/ukbb/adam/tinnitus_gwas/vcf_header1b.txt /mnt/ukbb/adam/tinnitus_gwas/vcf_header2.txt <(awk '{OFS="\t"}{if (NR>1) print $1,$2, ".", $4,$5 , "100", "PASS", "MVP="$3}' ptsd_chrX_all_broad.PHENO1.glm.logistic |  sort    -n -k1r,1 -k2,2  ) > ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf
+
+    bcftools view  ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf -Oz -o ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz
+
+    tabix -f ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz
+
+    #Some will not be annotated, need to identify these for my merge steps..
+
+    bcftools annotate  -a /mnt/ukbb/adam/tinnitus_gwas/All_20180423_hg19.vcf.gz -c INFO ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz -o ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated
+
+    echo "ID SNP"  | awk 'BEGIN {OFS="\t"} {print $1,$2}' > snpheader.txt
+
+
+    tail -n+82 ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated  | grep RS | awk '{print $8}' | awk 'BEGIN {FS=";"}{OFS="\t"} {print $1,$2}' | sed 's/RS=/rs/g' | sed 's/MVP=//g'  | cat snpheader.txt -  | LC_ALL=C sort -k1b,1 > ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated.success
+    tail -n+82 ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated | grep -v RS | awk '{print $8}' | awk 'BEGIN {FS=";"}{OFS="\t"} {print $1,$1}'                  | sed 's/MVP=//g'  | cat snpheader.txt - | LC_ALL=C sort -k1b,1   > ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated.failed
+
+    wc -l ptsd_chrX_all_broad.PHENO1.glm.logistic
+    wc -l ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated
+    wc -l ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated.success
+    wc -l ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated.failed
+
+    LC_ALL=C join -1 1 -2 3  ptsd_chrX_all_broad.PHENO1.glm.logistic.vcf.gz.annotated.success  <(LC_ALL=C sort -k3b,3 ptsd_chrX_all_broad.PHENO1.glm.logistic) > ptsd_chrX_all_broad.PHENO1.glm.logistic.success
+  
+  
+   #Get a1 and a2 
+   awk '{if (NR == 1) print $0, "A2"; else if ($7==$6) print $0,$5; else if ($7==$5) print $0,$6}' ptsd_chrX_all_broad.PHENO1.glm.logistic.success  >  ptsd_chrX_all_broad.PHENO1.glm.logistic.success.a2
+   
+   #get frequencies from a reference file.
+   zcat daner_iPSYCH2015_PTSDbroad_chrX_HRC_MAF01.gz  |  awk '{print $2,$7,$4,$5}'    >  temp/daip_AF.txt
+   
+   #Join frequencies.. do flip if 
+   LC_ALL=C join -1 2 -2 1  <(LC_ALL=C sort -k2b,2 ptsd_chrX_all_broad.PHENO1.glm.logistic.success.a2) <(LC_ALL=C sort -k1b,1 temp/daip_AF.txt) \
+   | awk '{FRQNEW=$15; if(NR>1){if($16!=$7){FRQNEW=(1-FRQNEW)}} print $0, FRQNEW}' \
+   | cut -d " " -f 1-15,19  | sed 's/#//g'   > ptsd_chrX_all_broad.PHENO1.glm.logistic.success.a2.afs1
+  
+  #Determine A2
+  
+  
+   awk '{if (NR == 1) print $0, "A2", "A1_Freq"; else if ($6==$5) print $0,$4,$13; else if ($6==$4) print $0,$5,1-$13}' 
+   #VCF tools annotate the the rsids...then merge in a frequency...
+   /home/pgcdac/DWFV2CJb8Piv_0116_pgc_data/pts/wave3/summary_stats/79_biov_v2//ptsd_chrX_all_broad.PHENO1.glm.logistic
+   
+
 
  #For this, need rs-id annotated, along with frequency
   ptsd_chrX_all_broad.PHENO1.glm.logistic
@@ -264,3 +314,32 @@ zcat  99_mayo/PLINK/ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic.gz | awk '{if(NR==1
 
 awk '{if($1=="23") print}' 99_mayo/PLINK/ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4 > 99_mayo/PLINK/ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.chr23
 #need to annotate rs-ids to this
+
+#need to add rsids to x chromsoome... fuck..
+
+    #the columns are: CHROM POS REF ALT ID
+    #important to use ref and alt1 for this!
+    cat /mnt/ukbb/adam/tinnitus_gwas/vcf_header1b.txt /mnt/ukbb/adam/tinnitus_gwas/vcf_header2.txt <(zcat ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.gz | awk '{OFS="\t"}{if (NR>1) print $1,$2, ".", $5,$6 , "100", "PASS", "MVP="$1":"$2}'  |  sort    -n -k1r,1 -k2,2  ) > ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf
+
+    bcftools view  ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf -Oz -o ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz
+
+    tabix -f ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz
+
+    #Some will not be annotated, need to identify these for my merge steps..
+
+    bcftools annotate  -a /mnt/ukbb/adam/tinnitus_gwas/All_20180423_hg19.vcf.gz -c INFO ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz -o ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated
+
+    echo "ID SNP"  | awk 'BEGIN {OFS="\t"} {print $1,$2}' > snpheader.txt
+
+
+    tail -n+82 ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated  | grep RS | awk '{print $8}' | awk 'BEGIN {FS=";"}{OFS="\t"} {print $1,$2}' | sed 's/RS=/rs/g' | sed 's/MVP=//g'  | cat snpheader.txt -  | LC_ALL=C sort -k1b,1 > ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated.success
+    tail -n+82 ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated | grep -v RS | awk '{print $8}' | awk 'BEGIN {FS=";"}{OFS="\t"} {print $1,$1}'                  | sed 's/MVP=//g'  | cat snpheader.txt - | LC_ALL=C sort -k1b,1   > ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated.failed
+
+    wc -l ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23
+    wc -l ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated
+    wc -l ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated.success
+    wc -l ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated.failed
+
+    LC_ALL=C join -1 1 -2 3  ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.vcf.gz.annotated.success  <(LC_ALL=C sort -k3b,3 ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23) > ptsd_def2.ALL.pcAdj.MAF0.01.glm.logistic4.gz_23.success
+  
+

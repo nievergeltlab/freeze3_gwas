@@ -19,3 +19,16 @@ for files in $(ls /home/maihofer/freeze3_gwas/results_cat | grep -v gz_ | grep l
  zcat /home/maihofer/freeze3_gwas/results_cat/$files | head -n2  |  tail -n1 | paste <(echo $files) -   >> completed_lat_may10_2021.txt
 }
 
+
+for files in $(ls /home/maihofer/freeze3_gwas/results_cat | grep -v gz_ | grep eur)
+{
+ #echo $files >> completed_eur_may10_2021.txt
+ zcat /home/maihofer/freeze3_gwas/results_cat/$files | head -n2  |  tail -n1 | paste <(echo $files) -   >> completed_eur_may10_2021.txt
+}
+
+
+for files in $(grep PROCESS f3_gwas_males_may13_2021_qtonly.mi | sed 's/PROCESS //g' | grep -v \# | sed 's/XXX/1/g')
+do
+
+ zcat $files | head -n2 | tail -n2 | awk '{print $11}' > eur_males_qt_may10_2022.txt
+done

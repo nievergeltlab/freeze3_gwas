@@ -15,7 +15,7 @@ do
  fi
  
  #Double level join on the pheno/cov then on the fam file
- LC_ALL=C join <(LC_ALL=C join <(awk '{print $1"_"$2,$3}' pheno/p2_"$study"_aam.pheno | LC_ALL=C sort -k1b,1 ) <(awk '{print $1"_"$2}' pheno/p2_"$study1"_aam_"$study2"_pcs.cov | LC_ALL=C sort -k1b,1 ) ) <(awk '{print $1"_"$2,$6}' /home/pgcdacpt/dac/pts/wave3/v1/"$study1"/qc1/"$famfile" | cat famheader.txt - |  LC_ALL=C sort -k1b,1) > samplecounts/"$study".samplecount
+ LC_ALL=C join <(LC_ALL=C join <(awk '{print $1"_"$2,$3}' pheno/p2_"$study"_lat.pheno | LC_ALL=C sort -k1b,1 ) <(awk '{print $1"_"$2}' pheno/p2_"$study1"_lat_"$study2"_pcs.cov | LC_ALL=C sort -k1b,1 ) ) <(awk '{print $1"_"$2,$6}' /home/pgcdacpt/dac/pts/wave3/v1/"$study1"/qc1/"$famfile" | cat famheader.txt - |  LC_ALL=C sort -k1b,1) > samplecounts/"$study".samplecount
  
  #print the name of column 2, and the number of samples. if column 2 says case, print number of cases and number of controls.
  #study n samples column 2 n cases column 2 n controls column 2
@@ -38,4 +38,4 @@ do
  
  done
 
-cat samplecounts/*.samplecount.counted > samplecounts/aam_case_control.counted
+cat samplecounts/*.samplecount.counted > samplecounts/lat_case_control.counted
