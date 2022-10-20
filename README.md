@@ -57,14 +57,14 @@ Grep out a list of top hits from the summar results
 
 
 ## Forest plots
-0_forest_Reformater.r  
-Reformat study level summary statistics (for a select marker) to be used in forest plots
-
-0_forest_plot.r  
-Generate the forest plot for a select marker
-
 06_forest_plot.sh  
 User script to reformat study level sumstats and generate forest plots
+
+    0_forest_Reformater.r  
+    Job script for  Reformat study level summary statistics (for a select marker) to be used in forest plots
+
+    0_forest_plot.r  
+    Job script for Generate the forest plot for a select marker
 
 ## PRS 
 07_prscs.sh  
