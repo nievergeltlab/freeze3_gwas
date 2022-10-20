@@ -12,6 +12,10 @@ Calculate pairwise genetic correlations between EHR datasets and the MVP
 00_sample_size_get.txt  
 Using the .fam files and .pheno/.cov files, get exact counts of analyzed subjects - per the analyzed phenotype and per the case/control phenotype
 
+05_count_sample_sizes.txt  
+Crummier script that just takes the N listed in the output file. Check against results of previous, total N must match.
+
+
 ## MiXeR pipeline
 00_prepare_files.sh  
 Reformat files for MiXeR analysis
@@ -28,14 +32,29 @@ Bivariate MiXeR analysis
 04_mixer_bivariate_plots.sh  
 Summarize and plot bivariate run results
 
-## GWAS
+
+## Meta-analysis
+reformat.slurm  
+Reformat summary stats to be split by chromosome, only take markers wiht >1% MAF
+
 00_vetsa_gwas.sh  
 VETSA twins cohort GWAS in Bolt LMM
 
+01_f3_gwas_v1.sh  
+Run individual GWAS (where I have data), meta-analyze results, preliminary LDSC analysis of results
 
-## Meta-analysis
+  run_trauma_gwas_v2_freeze3.slurm,run_trauma_gwas_v2_freeze3_case_control.slurm  
+  Job scripts for running GWAS
+  
+  run_meta_v2_loo_v2.slurm  
+  Job script for meta-analysis
+  
 00_translate_meta_pluses_to_samplesize.sh  
 Translate the +/- outputs from metal into exact sample sizes, to tabulate actual N/N cases/N controls for every marker.
+
+02_examine_tophits.sh  
+Grep out a list of top hits from the summar results 
+
 
 ## Forest plots
 0_forest_Reformater.r  
@@ -50,3 +69,7 @@ User script to reformat study level sumstats and generate forest plots
 ## PRS 
 07_prscs.sh  
 Calculate PRS in individual studies, combine results, test association with PTSD
+
+## Experimental
+01_rescale_qt_for_ivw.sh  
+For continuous phenotypes, rescale outputs to 0-1 range based on, for use in IVW meta-analysis
